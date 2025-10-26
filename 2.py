@@ -1,44 +1,69 @@
-from collections import deque
+import cv2
+import numpy as np
 
-# Graph represented as an adjacency list
-graph = {
-    'A': ['B', 'C'],
-    'B': ['D', 'E'],
-    'C': ['F'],
-    'D': [],
-    'E': ['F'],
-    'F': []
-}
+# 1. Load and display the original and grayscale image
+# --- Make sure to replace 'your_image_path.jpg' with the actual path to your image ---
+image = cv2.imread('S:\photo.png') 
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-# Depth-First Search (DFS) - Recursive
-def dfs(graph, start, visited=None):
-    if visited is None:
-        visited = set()
-    visited.add(start)
-    print(start, end=" ")
+cv2.imshow('Gray Scale', gray)
+cv2.waitKey(0)
 
-    for neighbor in graph[start]:
-        if neighbor not in visited:
-            dfs(graph, neighbor, visited)
+# ---------------------------------
+# 2. Sobel Edge Detection
+# ---------------------------------
+# Apply Sobel operator in x and y directions
+sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=5)
+sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=5)
 
-# Breadth-First Search (BFS) - Iterative
-def bfs(graph, start):
-    visited = set()
-    queue = deque([start])
-    visited.add(start)
+# Convert back to 8-bit unsigned integers
+sobel_x = cv2.convertScaleAbs(sobel_x)
+sobel_y = cv2.convertScaleAbs(sobel_y)
 
-    while queue:
-        vertex = queue.popleft()
-        print(vertex, end=" ")
+# Combine the x and y Sobel images
+sobel_combined = cv2.bitwise_or(sobel_x, sobel_y)
 
-        for neighbor in graph[vertex]:
-            if neighbor not in visited:
-                visited.add(neighbor)
-                queue.append(neighbor)
+# Display Sobel results
+cv2.imshow('Sobel X', sobel_x)
+cv2.imshow('Sobel Y', sobel_y)
+cv2.imshow('Sobel Combined', sobel_combined)
+cv2.waitKey(0)
 
-# Run both traversals
-print("DFS Traversal:")
-dfs(graph, 'A')
+# ---------------------------------
+# 3. Canny Edge Detection
+# ---------------------------------
+# Apply Canny edge detector
+canny_edges = cv2.Canny(gray, 100, 200)
 
-print("\nBFS Traversal:")
-bfs(graph, 'A')
+cv2.imshow('Canny Edge Detection', canny_edges)
+cv2.waitKey(0)
+
+# ---------------------------------
+# 4. Thresholding on Grayscale
+# ---------------------------------
+# Apply simple binary thresholding
+ret, binary_thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+
+cv2.imshow('Binary Threshold', binary_thresh)
+cv2.waitKey(0)
+
+# ---------------------------------
+# 5. Thresholding on Color
+# ---------------------------------
+# Split the color image into its B, G, R channels
+b, g, r = cv2.split(image)
+
+# Apply thresholding to each channel
+ret_b, thresh_b = cv2.threshold(b, 127, 255, cv2.THRESH_BINARY)
+ret_g, thresh_g = cv2.threshold(g, 127, 255, cv2.THRESH_BINARY)
+ret_r, thresh_r = cv2.threshold(r, 127, 255, cv2.THRESH_BINARY)
+
+# Merge the thresholded channels back together
+color_thresh = cv2.merge((thresh_b, thresh_g, thresh_r))
+
+cv2.imshow('Color Threshold Image', color_thresh)
+cv2.waitKey(0)
+
+# Clean up all windows
+cv2.destroyAllWindows()
+
